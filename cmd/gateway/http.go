@@ -1,8 +1,9 @@
 package gateway
 
 import (
-	"fmt"
+	"context"
 	"github.com/spf13/cobra"
+	"hb_hy_gateway/logic/http"
 )
 
 func NewHttpGatewayCommand() *cobra.Command {
@@ -10,13 +11,14 @@ func NewHttpGatewayCommand() *cobra.Command {
 		Use:   "http",
 		Short: "http gateway",
 		Long:  "check and distribution",
-		Run: func(cmd *cobra.Command, args []string) {
-			check()
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runHttpGateway()
 		},
 	}
 	return cmd
 }
 
-func check() {
-	fmt.Println(111)
+func runHttpGateway() error {
+	g := http.NewGateway(context.TODO())
+	return g.ListenAndServe()
 }

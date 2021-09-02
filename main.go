@@ -2,6 +2,7 @@ package main
 
 import (
 	"hb_hy_gateway/cmd"
+	_ "hb_hy_gateway/config"
 	"log"
 	"runtime"
 )
