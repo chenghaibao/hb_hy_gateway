@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "trackableappname" . }}-mq
+  labels:
+    app: {{ template "appname" . }}-mq
+    track: "{{ .Values.application.track }}"
+    tier: "{{ .Values.application.tier }}"
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    component: message
+spec:
+  serviceName: {{ .Values.service.name }}-mq
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: {{ template "appname" . }}-mq
+      track: "{{ .Values.application.track }}"
+      tier: "{{ .Values.application.tier }}"
+      release: {{ .Release.Name }}
+      component: message
+  template:
+    metadata:
+      labels:
+        app: {{ template "appname" . }}-mq
+        track: "{{ .Values.application.track }}"
+        tier: "{{ .Values.application.tier }}"
+        release: {{ .Release.Name }}
+        component: message
+    spec:
+      imagePullSecrets:
+      {{ toYaml .Values.image.secrets | indent 10 }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - {{ template "appname" . }}-mq
+                topologyKey: kubernetes.io/hostname
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command: ["/bin/rpc-gateway", "message-gateway"]
+        ports:
+        - name: metrics
+          containerPort: {{.Values.prometheus.metricsPort}}
+        env:
+        - name: AP_ETCD_SERVER
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.application.env_secret_key }}"
+              key: "etcd_server"
+        - name: AP_GATEWAY_MESSAGE_RABBIT_HOST
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.application.env_secret_key }}"
+              key: "rabbitmq_host"
+        - name: AP_GATEWAY_MESSAGE_RABBIT_USERNAME
+          value: {{ .Values.env.rabbitmq_username }}
+        - name: AP_GATEWAY_MESSAGE_RABBIT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.application.env_secret_key }}"
+              key: "rabbitmq_password"
+        - name: AP_GATEWAY_MESSAGE_LOG_DELAY_STORE
+          value: {{ .Values.env.message_delay_store }}
+        - name: AP_LOG_REMOTE_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.application.env_secret_key }}"
+              key: "log_hub_address"
+        volumeMounts:
+        - name: datadir
+          mountPath: "{{ .Values.persistentVolume.mountPath }}"
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+      volumes:
+          {{- if not .Values.persistentVolume.enabled }}
+          - name: datadir
+            emptyDir: {}
+          {{- end }}
+          - name: plugins
+            emptyDir: {}
+  {{- if .Values.persistentVolume.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: datadir
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        {{- if .Values.persistentVolume.storageClass }}
+        {{- if (eq "-" .Values.persistentVolume.storageClass) }}
+        storageClassName: ""
+        {{- else }}
+        storageClassName: "{{ .Values.persistentVolume.storageClass }}"
+        {{- end }}
+        {{- end }}
+        resources:
+          requests:
+            storage: "{{ .Values.persistentVolume.size }}"
+  {{- end }}

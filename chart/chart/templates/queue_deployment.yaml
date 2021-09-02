@@ -1,0 +1,108 @@
+{{- if .Values.queue.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "trackableappname" . }}-queue
+  labels:
+    app: {{ template "appname" . }}-queue
+    track: "{{ .Values.application.track }}"
+    tier: "{{ .Values.application.tier }}"
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    component: queue
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: {{ template "appname" . }}-queue
+      track: "{{ .Values.application.track }}"
+      tier: "{{ .Values.application.tier }}"
+      release: {{ .Release.Name }}
+      component: queue
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "appname" . }}-queue
+        track: "{{ .Values.application.track }}"
+        tier: "{{ .Values.application.tier }}"
+        release: {{ .Release.Name }}
+        component: queue
+    spec:
+      imagePullSecrets:
+{{ toYaml .Values.image.secrets | indent 10 }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - {{ template "appname" . }}-queue
+                topologyKey: kubernetes.io/hostname
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command: ["/bin/rpc-gateway", "message-queue-gateway"]
+        securityContext:
+          capabilities:
+            add:
+              - SYS_PTRACE
+        env:
+        - name: AP_GATEWAY_QUEUE_ROCKET_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.application.env_secret_key }}"
+              key: "rocket_endpoint"
+        - name: AP_GATEWAY_QUEUE_ROCKET_API_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.application.env_secret_key }}"
+              key: "rocket_api_endpoint"
+        - name: AP_GATEWAY_QUEUE_ROCKET_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.application.env_secret_key }}"
+              key: "rocket_access_key_id"
+        - name: AP_GATEWAY_QUEUE_ROCKET_ACCESS_KEY_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.application.env_secret_key }}"
+              key: "rocket_access_key_secret"
+        - name: AP_GATEWAY_QUEUE_ROCKET_SECURITY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.application.env_secret_key }}"
+              key: "rocket_security_token"
+        - name: AP_GATEWAY_QUEUE_ROCKET_INSTANCE_ID
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.application.env_secret_key }}"
+              key: "rocket_instance_id"
+        - name: AP_GATEWAY_QUEUE_ROCKET_TOPIC_PREFIX
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.application.env_secret_key }}"
+              key: "topic_prefix"
+        - name: AP_ETCD_SERVER
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.application.env_secret_key }}"
+              key: "etcd_server"
+        - name: AP_LOG_REMOTE_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: "{{ .Values.application.env_secret_key }}"
+              key: "log_hub_address"
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+{{- end -}}

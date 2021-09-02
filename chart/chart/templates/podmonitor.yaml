@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ template "trackableappname" . }}-monitor
+  namespace: {{ .Values.prometheus.namespace }}
+  labels:
+    app: {{ template "appname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+spec:
+  jobLabel: {{ template "trackableappname" . }}
+  selector:
+    matchLabels:
+      release: {{ .Release.Name }}
+  podMetricsEndpoints:
+    - interval: {{ .Values.prometheus.interval }}
+      path: /metrics
+      port: metrics
+      relabelings:
+        - targetLabel: component
+          replacement: {{ .Release.Name }}
+        - action: replace
+          sourceLabels: [__meta_kubernetes_pod_label_component]
+          targetLabel: instance
+  namespaceSelector:
+    any: true
