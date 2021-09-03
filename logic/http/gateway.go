@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"hb_hy_gateway/config"
 	"net/http"
 	"strings"
@@ -24,25 +23,20 @@ func NewGateway(ctx context.Context) *Gateway {
 			MaxHeaderBytes:    config.Viper.GetInt("gateway.http.max_header_size"),
 		},
 	}
-
 	//返回处理
 	g.server.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 入口网关符合
 		if isEnterIngress := strings.Contains("127.0.0.1", r.URL.Host); isEnterIngress {
-			g.checker(w,r)
-
+			isChecker := g.checker(w,r)
+			if isChecker == true {
+				g.sendRequest(w,r)
+			}
 		}
-
 	})
-
 	return g
 }
 
 func (g *Gateway) ListenAndServe() error {
 	// 监听端口
 	return g.server.ListenAndServe()
-}
-
-func TestRun() {
-	fmt.Println("12321")
 }

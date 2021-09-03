@@ -18,10 +18,7 @@ func NewHttpGatewayCommand() *cobra.Command {
 	return cmd
 }
 
-//func runHttpGateway()  {
-//
-//	http.TestRun()
-//}
+
 
 func runHttpGateway() error {
 	go http.SignalListen()
