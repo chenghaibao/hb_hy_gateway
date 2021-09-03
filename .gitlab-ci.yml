@@ -7,39 +7,24 @@ stages:
   [[ "$TRACE" ]] && set -x
 
   function deploy() {
-    echo "Restoring Packages... $1"
+    docker rm  hb
+    docker rmi hb
   }
 
 
 before_script:
   - *auto_devops
 
-
-.build_job:
-  stage: build
-  environment:
-    name: master
-  script:
-    - echo "Release build..."
-    - deploy 333
-  except:
-    - tags
-
 .build_job:dev:
   variables:
     URL: "hb"
   script:
-    - echo "Hello world! $URL"
+    - deploy
+    - docker build -t hb .
 
 build_job:
   extends:
-    - .build_job
     - .build_job:dev
-
-test_job:
-  stage: test
-  script:
-    - echo "Tests run..."
 
 master_job:
   stage: test
@@ -47,5 +32,5 @@ master_job:
     refs:
       - master
   script:
-    - echo "Tests run..."
+    - docker run --name hb -d -p 9086:9086 hb
   when: manual

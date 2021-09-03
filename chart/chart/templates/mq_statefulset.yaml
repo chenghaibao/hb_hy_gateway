@@ -39,7 +39,7 @@ spec:
               podAffinityTerm:
                 labelSelector:
                   matchExpressions:
-                    - key: app
+                    - key: app21321
                       operator: In
                       values:
                         - {{ template "appname" . }}-mq
