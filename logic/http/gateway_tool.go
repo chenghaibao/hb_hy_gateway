@@ -12,17 +12,16 @@ import (
 	"syscall"
 )
 
-var traceId string
+var TraceId string
 var db *db2.Db
 
 func init() {
 	db = db2.GetDbInstance()
-	traceId = utils.GetTraceId()
 }
 
 func (g *Gateway) checker(w http.ResponseWriter, r *http.Request) bool {
 	// 入门网关错误
-
+	TraceId = utils.GetTraceId()
 	// 获取token 不验证鉴权
 	token := g.GetToken(w, r)
 	if token == false {
@@ -46,7 +45,7 @@ func (g *Gateway) GetToken(w http.ResponseWriter, r *http.Request) bool {
 	// 获取token
 	h := w.Header()
 	if r.URL.Path == "/get-token" {
-		h.Set("x-stream-id", traceId)
+		h.Set("x-stream-id", TraceId)
 		g.jsonSimpleTextSuccess(w, "success")
 		return true
 	}
@@ -60,7 +59,7 @@ func (g *Gateway) isToken(w http.ResponseWriter, r *http.Request) bool {
 	// 参数传过去  去获取token 返回前端
 	if token != string(dbToken) {
 		//报错
-		g.jsonErrorWithTraceId(w, traceId, 404, "token not exist")
+		g.jsonErrorWithTraceId(w, TraceId, 404, "token not exist")
 		return false
 	}
 	return true
@@ -74,7 +73,7 @@ func (g *Gateway) isService(w http.ResponseWriter, r *http.Request) bool {
 	fmt.Println(dbToken)
 	if dbToken == false {
 		//报错
-		g.jsonErrorWithTraceId(w, traceId, 404, "service not exist")
+		g.jsonErrorWithTraceId(w, TraceId, 404, "service not exist")
 		return false
 	}
 	return true

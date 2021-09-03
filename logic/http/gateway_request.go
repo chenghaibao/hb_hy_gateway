@@ -19,7 +19,7 @@ func (g *Gateway) sendRequest(w http.ResponseWriter, r *http.Request) bool {
 	//
 	////请求失败
 	if requestSuccess == true {
-		g.jsonErrorWithTraceId(w, "22222", 403, "request failed")
+		g.jsonErrorWithTraceId(w, TraceId, 403, "request failed")
 		return false
 	}
 	return true
