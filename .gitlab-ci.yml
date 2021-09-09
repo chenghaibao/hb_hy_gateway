@@ -17,10 +17,10 @@ before_script:
 
 .build_job:dev:
   variables:
-    URL: "hb"
+    URL: "chart"
   script:
     - deploy
-    - docker build -t hb .
+    - docker build -t chart .
 
 build_job:
   extends:
@@ -32,5 +32,5 @@ master_job:
     refs:
       - master
   script:
-    - docker run --name hb -d -p 9086:9086 hb
+    - docker run --name chart -d -p 9086:9086 chart
   when: manual

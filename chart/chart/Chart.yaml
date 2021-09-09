@@ -1,5 +1,0 @@
-apiVersion: v1
-description: hb Gateway
-name: hb-gateway
-version: 1.0.0
-icon: https://gitlab.com/gitlab-com/gitlab-artwork/raw/master/logo/logo-square.png

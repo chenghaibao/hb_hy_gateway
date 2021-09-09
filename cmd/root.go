@@ -17,8 +17,8 @@ var Build = "local_build"
 //主函数 用来调用各种网关
 func init(){
 	RootCmd = &cobra.Command{
-		Use:              "hb gateway",
-		Short:            "hb gateway",
+		Use:              "chart gateway",
+		Short:            "chart gateway",
 		SilenceUsage:     true,
 		SilenceErrors:    true,
 		TraverseChildren: true,
@@ -46,7 +46,7 @@ func noArgs(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return nil
 	}
-	return fmt.Errorf("hb-gateway: '%s' is not a gateway command.\nSee 'hb-gateway --help'", args[0])
+	return fmt.Errorf("chart-gateway: '%s' is not a gateway command.\nSee 'chart-gateway --help'", args[0])
 }
 
 func Execute() {
